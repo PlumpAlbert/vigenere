@@ -1,10 +1,8 @@
 #include "unicode.h"
 
 size_t
-char_to_unicode(uint16_t **dest, char *src, size_t n)
+char_to_unicode(uint16_t *__restrict__ dest, char *src, size_t n)
 {
-  if (dest == NULL)
-    return 0;
   uint16_t *buf = malloc(sizeof(uint16_t) * n);
   size_t buf_size = 0;
   for (size_t i = 0; i < n; i++)
@@ -20,15 +18,16 @@ char_to_unicode(uint16_t **dest, char *src, size_t n)
     u -= UNICODE_CONST;
     buf[buf_size++] = u;
   }
-  *dest = buf;
+  if (dest == NULL)
+    dest = buf;
+  else
+    memcpy(dest, buf, buf_size);
   return buf_size;
 }
 
 size_t
-unicode_to_char(char **dest, uint16_t *src, size_t n)
+unicode_to_char(char *__restrict__ dest, uint16_t *src, size_t n)
 {
-  if (dest == NULL)
-    return 0;
   char *buf = malloc(sizeof(char) * n * 2);
   size_t buf_size = 0;
   for (size_t i = 0; i < n; i++)
@@ -38,16 +37,16 @@ unicode_to_char(char **dest, uint16_t *src, size_t n)
     if (uc < 127)
     {
       buf[buf_size++] = uc;
-      printf("%X\n", (uint8_t)buf[buf_size - 1]);
       continue;
     }
     uc += UNICODE_CONST;
     for (size_t j = 2; j > 0; j--)
       buf[buf_size++] = p[j - 1];
   }
-  if (*dest != NULL)
-    memcpy(*dest, buf, buf_size);
+  buf[buf_size++] = '\0';
+  if (dest != NULL)
+    memcpy(dest, buf, buf_size);
   else
-    *dest = buf;
+    dest = buf;
   return buf_size;
 }
